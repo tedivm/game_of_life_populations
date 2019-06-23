@@ -101,21 +101,21 @@ class Life {
         }
       }
 
-      let best = false
+      let best = []
       let best_count = 0
       for (const color in colors) {
         if (colors[color] > best_count) {
-          best = color
+          best = [color]
           best_count = colors[color]
-        } else if (colors[color] == best_count && Math.random() < 0.5) {
-          best = color
+        } else if (colors[color] == best_count) {
+          best.push(color)
         }
       }
-      if (!best) {
+      if (best.length < 1) {
         return randomCellColor()
       }
 
-      return best
+      return best[Math.floor(Math.random() * best.length)];
     }
 
     grid.forEach(function(row, x) {
