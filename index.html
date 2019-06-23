@@ -35,13 +35,12 @@
     const ctx = canvas.getContext('2d');
     ctx.canvas.width  = window.innerWidth * coverage;
     ctx.canvas.height = window.innerHeight * coverage;
-    const game = new Life(canvas, 5)
-    game.run({
+    const game = new Life(canvas, 5, {
       'sleep':100,
       'start_pop': 0.45,
-      'min_pop': 0.04
+      'min_pop': 0.05
     })
-
+    game.run()
 
     $(window).resize(function(){
       ctx.canvas.width  = window.innerWidth * coverage;
@@ -49,6 +48,33 @@
       game.resize()
     });
 
+    $('body').keyup(function(e){
+
+      switch (e.keyCode) {
+
+        case 13: // user has pressed enter
+          game.reset()
+          break;
+
+        case 32: // user has pressed space
+          game.pause = !game.pause
+          break;
+
+        case 38: // user has pressed up
+          if (game.opts.sleep > 100) {
+            game.opts.sleep -= 50
+          }
+          break;
+
+        case 40: // user has pressed down
+            game.opts.sleep += 50
+          break;
+
+        default:
+
+      }
+
+    });
 
   </script>
 </html>
