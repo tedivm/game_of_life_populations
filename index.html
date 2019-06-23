@@ -1,0 +1,55 @@
+---
+---
+
+<html>
+  <head>
+    <title>Game of Life</title>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+    <script src="/assets/js/randomColor/randomColor.js"></script>
+    <script src="/assets/js/life.js"></script>
+
+    <style type="text/css">
+      #container {
+      	text-align: center;
+        width: 100%;
+        height: 100%;
+        margin: 0px auto;
+
+      }
+      #life {
+        border: 1px solid black;
+      }
+    </style>
+
+  </head>
+  <body>
+
+    <div id="container">
+      <canvas id="life">
+        Canvas is required.
+      </canvas>
+    </div>
+
+  </body>
+  <script>
+    console.log(`Loading canvas at #life`)
+    const canvas = document.getElementById("life");
+    const ctx = canvas.getContext('2d');
+    ctx.canvas.width  = window.innerWidth * 0.98;
+    ctx.canvas.height = window.innerHeight * 0.98;
+    const game = new Life(canvas, 5)
+    game.run({
+      'sleep':100,
+      'start_pop': 0.45
+    })
+
+
+    $(window).resize(function(){
+      ctx.canvas.width  = window.innerWidth * 0.98;
+      ctx.canvas.height = window.innerHeight * 0.98;
+      game.resize()
+    });
+
+
+  </script>
+</html>
