@@ -7,7 +7,7 @@
     <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
     <script src="assets/js/randomColor/randomColor.js"></script>
     <script src="assets/js/life.js"></script>
-
+    <link rel="shortcut icon" href="favicon.ico">
     <style type="text/css">
       #container {
       	text-align: center;
@@ -23,16 +23,13 @@
 
   </head>
   <body>
-
     <div id="container">
       <canvas id="life">
         Canvas is required.
       </canvas>
     </div>
-
   </body>
   <script>
-    console.log(`Loading canvas at #life`)
     const canvas = document.getElementById("life");
     const ctx = canvas.getContext('2d');
     ctx.canvas.width  = window.innerWidth * 0.98;
@@ -40,7 +37,8 @@
     const game = new Life(canvas, 5)
     game.run({
       'sleep':100,
-      'start_pop': 0.45
+      'start_pop': 0.45,
+      'min_pop': 0.04
     })
 
 

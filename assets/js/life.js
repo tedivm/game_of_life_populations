@@ -12,10 +12,10 @@ function randomCellColor() {
 }
 
 class Life {
-  constructor(canvas,size) {
+  constructor(canvas, size, offgrid=10) {
     this.canvas = canvas
     this.size = size
-    this.offgrid = 2
+    this.offgrid = offgrid
     this.resize()
   }
 
