@@ -25,7 +25,7 @@ function getHSL (str) {
   } : {}
 }
 
-const possibleModes = ['majority', 'blend', 'random', 'density', 'mono']
+const possibleModes = ['majority', 'blend', 'density', 'mono']
 
 class Life {
   constructor (canvas, size, opts) {
