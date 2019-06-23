@@ -1,124 +1,104 @@
 
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+function sleep (ms) {
+  return new Promise(resolve => setTimeout(resolve, ms))
 }
 
 // Simple wrapper around randomColor
-function randomCellColor() {
+function randomCellColor () {
   return randomColor({
-     luminosity: 'bright',
-     format: 'hsl'
-  });
+    luminosity: 'bright',
+    format: 'hsl'
+  })
 }
 
-const hsl_regex = /hsl\(\s*(\d{1,3}),\s*(\d{1,2}\.?\d*)%,\s*(\d{1,2}\.?\d*)%\s*\)/
-function getHSL(str){
-  var match = str.match(hsl_regex);
+function randomInt (min, max) {
+  return Math.floor(Math.random() * Math.floor(max - min)) + min
+}
+
+const hslRegex = /hsl\(\s*(\d{1,3}),\s*(\d{1,2}\.?\d*)%,\s*(\d{1,2}\.?\d*)%\s*\)/
+function getHSL (str) {
+  var match = str.match(hslRegex)
   return match ? {
     hue: match[1],
     saturation: match[2],
     lightness: match[3]
-  } : {};
+  } : {}
 }
 
-
-const possible_modes = ['majority', 'blend', 'random', 'mono']
+const possibleModes = ['majority', 'blend', 'random', 'density', 'mono']
 
 class Life {
-  constructor(canvas, size, opts) {
+  constructor (canvas, size, opts) {
     this.opts = Object.assign({
-      "sleep": 100,
-      "print": false,
-      "min_pop": 0.05,
-      "start_pop": 0.35,
-      "max_generations": false,
-      "persist_colors": null,
-      "mode": false
-    }, opts);
+      'sleep': 100,
+      'print': false,
+      'min_pop': 0.05,
+      'start_pop': 0.35,
+      'max_generations': false,
+      'persistColors': null,
+      'mode': false
+    }, opts)
     this.pause = false
     this.canvas = canvas
     this.size = size
     this.mode = false
-    this.persist_colors = true
+    this.persistColors = true
     this.offgrid = 10
     this.mono = randomCellColor()
     this.resize()
   }
 
-  resize() {
-    this.rows = Math.floor(this.canvas.offsetHeight/this.size) + (this.offgrid*2)
-    this.columns = Math.floor(this.canvas.offsetWidth/this.size) + (this.offgrid*2)
+  resize () {
+    this.rows = Math.floor(this.canvas.offsetHeight / this.size) + (this.offgrid * 2)
+    this.columns = Math.floor(this.canvas.offsetWidth / this.size) + (this.offgrid * 2)
   }
 
-  getGrid() {
-    if(!this.grid) {
+  getGrid () {
+    if (!this.grid) {
       this.generateRandomGrid()
     }
     return this.grid
   }
 
-  countNeighbors(x, y) {
-    var amount = 0;
-    var cells = this.grid
-    function _isFilled(x, y) {
-        return cells[x] && cells[x][y];
-    }
-
-    if (_isFilled(x-1, y-1)) amount++;
-    if (_isFilled(x,   y-1)) amount++;
-    if (_isFilled(x+1, y-1)) amount++;
-    if (_isFilled(x-1, y  )) amount++;
-    if (_isFilled(x+1, y  )) amount++;
-    if (_isFilled(x-1, y+1)) amount++;
-    if (_isFilled(x,   y+1)) amount++;
-    if (_isFilled(x+1, y+1)) amount++;
-
-
-    return amount;
-  }
-
-  steps(num=1) {
-    for(var x = 0; x < num; x++) {
+  steps (num = 1) {
+    for (var x = 0; x < num; x++) {
       this.step()
     }
   }
 
-  step() {
-    var result = [];
+  step () {
+    var result = []
     var grid = this.getGrid()
     const that = this
-    /**
-     * Return amount of alive neighbors for a cell
-     */
-    function _countNeighbours(x, y) {
-      var amount = 0;
 
-      function _isFilled(x, y) {
-        return grid[x] && grid[x][y];
-      }
-
-      if (_isFilled(x-1, y-1)) amount++;
-      if (_isFilled(x,   y-1)) amount++;
-      if (_isFilled(x+1, y-1)) amount++;
-      if (_isFilled(x-1, y  )) amount++;
-      if (_isFilled(x+1, y  )) amount++;
-      if (_isFilled(x-1, y+1)) amount++;
-      if (_isFilled(x,   y+1)) amount++;
-      if (_isFilled(x+1, y+1)) amount++;
-
-      return amount;
+    function _isFilled (x, y) {
+      return grid[x] && grid[x][y]
     }
 
-    function _getNeighboringColors(x, y) {
-      const colors = {};
+    function _countNeighbors (x, y, range = 1) {
+      var amount = 0
+
+      for (let nX = x - range; nX <= x + range; nX++) {
+        for (let nY = y - range; nY <= y + range; nY++) {
+          if (nY !== y || nX !== x) {
+            if (_isFilled(nX, nY)) amount++
+          }
+        }
+      }
+
+      return amount
+    }
+
+    function _getNeighboringColors (x, y) {
+      const colors = {}
 
       for (let i = -1; i < 2; i++) {
-        if (!grid[x+i]) {
-          continue;
+        if (!grid[x + i]) {
+          continue
         }
         for (let j = -1; j < 2; j++) {
-          if (grid[x+i][y+j]) {
-            const color = grid[x+i][y+j];
+          if (grid[x + i][y + j]) {
+            const color = grid[x + i][y + j]
             if (!colors[color]) {
               colors[color] = 1
             } else {
@@ -130,15 +110,15 @@ class Life {
       return colors
     }
 
-    function _getPredominentColor(x, y) {
-      const colors = _getNeighboringColors(x, y);
+    function _getPredominentColor (x, y) {
+      const colors = _getNeighboringColors(x, y)
       let best = []
-      let best_count = 0
+      let bestCount = 0
       for (const color in colors) {
-        if (colors[color] > best_count) {
+        if (colors[color] > bestCount) {
           best = [color]
-          best_count = colors[color]
-        } else if (colors[color] == best_count) {
+          bestCount = colors[color]
+        } else if (colors[color] === bestCount) {
           best.push(color)
         }
       }
@@ -146,13 +126,13 @@ class Life {
         return randomCellColor()
       }
 
-      return best[Math.floor(Math.random() * best.length)];
+      return best[Math.floor(Math.random() * best.length)]
     }
 
-    function _getColorBlend(x, y) {
-      const colors = _getNeighboringColors(x, y);
+    function _getColorBlend (x, y) {
+      const colors = _getNeighboringColors(x, y)
 
-      const color_code = {
+      const colorCode = {
         h: 0,
         s: 0,
         l: 0
@@ -162,204 +142,140 @@ class Life {
 
       for (const color in colors) {
         let rgb = getHSL(color)
-        color_code['h'] += rgb['hue'] * colors[color]
-        color_code['s'] += rgb['saturation'] * colors[color]
-        color_code['l'] += rgb['lightness'] * colors[color]
+        colorCode.h += rgb.hue * colors[color]
+        colorCode.s += rgb.saturation * colors[color]
+        colorCode.l += rgb.lightness * colors[color]
         total += colors[color]
       }
 
-      color_code.h = Math.round(color_code.h/total);
-      color_code.s = Math.round(color_code.s/total);
-      color_code.l = Math.round(color_code.l/total);
+      colorCode.h = Math.round(colorCode.h / total)
+      colorCode.s = Math.round(colorCode.s / total)
+      colorCode.l = Math.round(colorCode.l / total)
 
-      return `hsl(${color_code.h}, ${color_code.s}%, ${color_code.l}%)`
+      return `hsl(${colorCode.h}, ${colorCode.s}%, ${colorCode.l}%)`
     }
 
-    function _getNewColor(x, y, mode) {
-      switch (mode) {
+    function _getColorDensity (x, y) {
+      if (!that.runtime.density_offset) {
+        that.runtime.density_offset = randomInt(15, 120)
+      }
+      if (!that.runtime.range) {
+        that.runtime.range = randomInt(2, 5)
+      }
+
+      if (!that.runtime.direction) {
+        that.runtime.direction = randomInt(1, 2)
+      }
+
+      const maxDensity = (((that.runtime.range * 2) + 1) ** 2) - 1
+      const neighbors = _countNeighbors(x, y, that.runtime.range)
+      let density = (neighbors / maxDensity)
+      if (that.runtime.direction === 1) {
+        density = 1.0 - density
+      }
+
+      const h = (density * 240) + that.runtime.density_offset
+      return 'hsl(' + h + ', 100%, 50%)'
+    }
+
+    function _getNewColor (x, y) {
+      switch (that.mode) {
         case 'majority':
+          if (that.persistColors && _isFilled(x, y)) return grid[x][y]
           return _getPredominentColor(x, y)
 
         case 'blend':
+          if (that.persistColors && _isFilled(x, y)) return grid[x][y]
           return _getColorBlend(x, y)
 
         case 'random':
+          if (that.persistColors && _isFilled(x, y)) return grid[x][y]
           return randomCellColor()
 
         case 'mono':
           return that.mono
 
+        case 'density':
+          return _getColorDensity(x, y)
+
         default:
+          if (that.persistColors && _isFilled(x, y)) return grid[x][y]
           return _getPredominentColor(x, y)
       }
     }
 
-    const mode = this.mode
-    const persist_colors = this.persist_colors
-    grid.forEach(function(row, x) {
-        result[x] = [];
-        row.forEach(function(cell, y) {
-            var alive = 0,
-                count = _countNeighbours(x, y);
+    grid.forEach(function (row, x) {
+      result[x] = []
+      row.forEach(function (cell, y) {
+        let alive = 0
+        let count = _countNeighbors(x, y)
 
-            if (cell) {
-                alive = count === 2 || count === 3 ? 1 : 0;
-            } else {
-                alive = count === 3 ? 1 : 0;
-            }
+        if (cell) {
+          alive = count === 2 || count === 3 ? 1 : 0
+        } else {
+          alive = count === 3 ? 1 : 0
+        }
 
-            if (alive) {
-              if (!result[x][y]) {
-                if (persist_colors && grid[x][y]) {
-                  result[x][y] = grid[x][y]
-                } else {
-                  result[x][y] = _getNewColor(x, y, mode)
-                }
-              }
-            } else {
-              result[x][y] = 0
-            }
-        });
-    });
+        if (alive) {
+          result[x][y] = _getNewColor(x, y)
+        } else {
+          result[x][y] = 0
+        }
+      })
+    })
 
-    this.grid = result;
+    this.grid = result
   }
 
-  generateRandomGrid(population=0.5) {
+  generateRandomGrid (population = 0.5) {
     var grid = []
-    for(var x = 0; x < this.columns; x++) {
-      for(var y = 0; y < this.rows; y++) {
-        if(!grid[x]) {
+    for (var x = 0; x < this.columns; x++) {
+      for (var y = 0; y < this.rows; y++) {
+        if (!grid[x]) {
           grid[x] = []
         }
-        const color = this.mode == "mono" ? this.mono : randomCellColor()
+        const color = this.mode === 'mono' ? this.mono : randomCellColor()
         grid[x][y] = (Math.random() < population) ? color : 0
       }
     }
     this.grid = grid
   }
 
-  loadFromPattern(pattern, center=false) {
-
-    if(center) {
-      var center_x = Math.round(this.columns/2)
-      var center_y = Math.round(this.rows/2)
-      var pattern_halfy = Math.round(pattern.length/2)
-      var pattern_halfx = Math.round(pattern[0].length/2)
-      var x_start = center_x - pattern_halfx
-      var y_start = center_y - pattern_halfy
-    } else {
-      var x_start = 0
-      var y_start = 0
-    }
-
-    var grid = []
-    for(var x = 0; x < this.columns; x++) {
-      grid[x] = []
-      for(var y = 0; y < this.rows; y++) {
-        var pattern_x = x - x_start
-        var pattern_y = y - y_start
-        if(pattern_x >= 0 && pattern_y >= 0) {
-          if(pattern_y < pattern.length && pattern_x < pattern[pattern_y].length) {
-            grid[x][y] = pattern[pattern_y][pattern_x]
-            continue
-          }
-        }
-        grid[x][y] = 0
-      }
-    }
-
-    this.grid = grid
-
-  }
-
-  loadFromString(string) {
-    var chunks = string.split(',')
-    var grid = []
-    var index = 0
-    for(var y = 0; y < this.rows; y++) {
-
-      if(!!chunks[y]) {
-        var section = parseInt(chunks[y],36).toString(2)
-        var offset = this.columns - section.length
-      } else {
-        var section = ''
-        var offset = 0
-      }
-
-      var index = 0
-      for(var x = 0; x < this.columns; x++) {
-
-        if(!grid[x]) {
-          grid[x] = []
-        }
-
-        if(offset > index) {
-          grid[x][y] = 0
-        } else {
-          grid[x][y] = !!section[index-offset] && parseInt(section[index-offset]) == 1 ? 1 : 0
-        }
-        index++
-      }
-    }
-
-    this.grid = grid
-    return
-  }
-
-  saveToString() {
-    var string = ''
-    var grid = this.getGrid()
-    for(var y = 0; y < this.rows; y++) {
-      var next = ''
-      for(var x = 0; x < this.columns; x++) {
-        next += grid[x][y] > 0 ? "1" : "0"
-      }
-      var nextchar = parseInt(next,2).toString(36)
-      string += parseInt(next,2).toString(36)
-      if(y+1 < this.rows) {
-        string += ','
-      }
-    }
-    return string
-  }
-
-  draw() {
+  draw () {
     var grid = this.getGrid()
     var string = ''
-    for(var y = 0; y < this.rows; y++) {
-      for(var x = 0; x < this.columns; x++) {
-        string += bool(grid[x][y]) ? "1" : "0"
+    for (var y = 0; y < this.rows; y++) {
+      for (var x = 0; x < this.columns; x++) {
+        string += bool(grid[x][y]) ? '1' : '0'
       }
-      string += "\n"
+      string += '\n'
     }
     console.log(string)
   }
 
-  draw_canvas() {
-
+  drawCanvas () {
     const height = this.canvas.offsetHeight
     const width = this.canvas.offsetWidth
 
-    const ctx = this.canvas.getContext('2d');
-    ctx.clearRect(0, 0, width, height);
+    const ctx = this.canvas.getContext('2d')
+    ctx.clearRect(0, 0, width, height)
 
     const grid = this.getGrid()
     const offgrid = 2
 
-    const screen_columns = this.columns - (offgrid*2)
-    const screen_rows = this.rows - (offgrid*2)
+    const screenColumns = this.columns - (offgrid * 2)
+    const screenRows = this.rows - (offgrid * 2)
 
-    for(var s_x = 0; s_x < screen_columns; s_x++) {
-      let g_x = s_x + offgrid
-      if (!grid[g_x]) {
+    for (var sX = 0; sX < screenColumns; sX++) {
+      let gX = sX + offgrid
+      if (!grid[gX]) {
         continue
       }
-      for(var s_y = -(offgrid); s_y < screen_rows; s_y++) {
-        let g_y = s_y + offgrid
-        if (grid[g_x][g_y]) {
-          ctx.fillStyle = grid[g_x][g_y];
-          ctx.fillRect(s_x*this.size, s_y*this.size, this.size, this.size);
+      for (var sY = -(offgrid); sY < screenRows; sY++) {
+        let gY = sY + offgrid
+        if (grid[gX][gY]) {
+          ctx.fillStyle = grid[gX][gY]
+          ctx.fillRect(sX * this.size, sY * this.size, this.size, this.size)
         }
       }
     }
@@ -369,11 +285,11 @@ class Life {
     const grid = this.getGrid()
     let count = 0
 
-    for(let x = 0; x < this.columns; x++) {
+    for (let x = 0; x < this.columns; x++) {
       if (!grid[x]) {
         continue
       }
-      for(let y = 0; y < this.rows; y++) {
+      for (let y = 0; y < this.rows; y++) {
         if (grid[x][y]) {
           count++
         }
@@ -386,36 +302,39 @@ class Life {
     return this.rows * this.columns
   }
 
-  adjust (opts=false) {
+  adjust (opts = false) {
     if (opts) {
-      this.opts = Object.assign(this.opts, opts);
+      this.opts = Object.assign(this.opts, opts)
     }
   }
 
-  reset (opts=false) {
+  reset (opts = false) {
     if (opts) {
-      this.opts = Object.assign(this.opts, opts);
+      this.opts = Object.assign(this.opts, opts)
     }
 
+    this.runtime = {}
+
+    this.generation = 0
+
     if (!this.opts.mode) {
-      this.mode = possible_modes[Math.floor(Math.random() * possible_modes.length)];
+      this.mode = possibleModes[Math.floor(Math.random() * possibleModes.length)]
     } else {
       this.mode = this.opts.mode
     }
 
-    if (typeof this.opts.persist_colors === 'undefined') {
-      this.persist_colors = Math.random() >= 0.5
+    if (typeof this.opts.persistColors === 'undefined') {
+      this.persistColors = Math.random() >= 0.5
     } else {
-      this.persist_colors = this.opts.persist_colors
+      this.persistColors = this.opts.persistColors
     }
 
     this.mono = randomCellColor()
     this.generateRandomGrid(this.opts['start_pop'])
-    this.draw_canvas()
+    this.drawCanvas()
   }
 
-  async run (opts={}) {
-
+  async run (opts = {}) {
     console.log(this.opts)
 
     this.reset()
@@ -423,49 +342,48 @@ class Life {
       this.draw()
     }
 
-    let same_count = 0
-    let last_pop = 0
+    let sameCount = 0
+    let lastPop = 0
 
-    for (let i = 0; true; i++) {
-      await sleep(this.opts['sleep']);
+    for (; true; this.generation++) {
+      await sleep(this.opts['sleep'])
 
       if (this.pause) {
         continue
       }
 
-      if (this.opts['max_generations'] && this.opts['max_generations'] < i) {
+      if (this.opts['max_generations'] && this.opts['max_generations'] <= this.generation) {
         this.reset()
         continue
       }
 
       this.step()
-      const cur_pop = this.count()
-      const max_pop = this.rows * this.columns
+      const curPop = this.count()
+      const maxPop = this.rows * this.columns
 
       // If population is too low reset the world.
-      if (this.opts['min_pop'] > (cur_pop/max_pop)) {
+      if (this.opts['min_pop'] > (curPop / maxPop)) {
         this.reset()
         continue
       }
 
       // Detect when population isn't changing. Catches some, but not all, short loops.
-      if (cur_pop == last_pop) {
-        same_count++
-        if (same_count >= this.opts['stale_count']) {
+      if (curPop === lastPop) {
+        sameCount++
+        if (sameCount >= this.opts['stale_count']) {
           this.reset()
           continue
         }
       } else {
-        same_count = 0
-        last_pop = cur_pop
+        sameCount = 0
+        lastPop = curPop
       }
 
       if (this.opts.print) {
         this.draw()
       }
 
-      this.draw_canvas()
+      this.drawCanvas()
     }
   }
-
 }
