@@ -30,10 +30,11 @@
     </div>
   </body>
   <script>
+    const coverage = 0.98
     const canvas = document.getElementById("life");
     const ctx = canvas.getContext('2d');
-    ctx.canvas.width  = window.innerWidth * 0.98;
-    ctx.canvas.height = window.innerHeight * 0.98;
+    ctx.canvas.width  = window.innerWidth * coverage;
+    ctx.canvas.height = window.innerHeight * coverage;
     const game = new Life(canvas, 5)
     game.run({
       'sleep':100,
@@ -43,8 +44,8 @@
 
 
     $(window).resize(function(){
-      ctx.canvas.width  = window.innerWidth * 0.98;
-      ctx.canvas.height = window.innerHeight * 0.98;
+      ctx.canvas.width  = window.innerWidth * coverage;
+      ctx.canvas.height = window.innerHeight * coverage;
       game.resize()
     });
 
