@@ -36,7 +36,8 @@ class Life {
       'start_pop': 0.35,
       'max_generations': false,
       'persistColors': null,
-      'mode': false
+      'mode': false,
+      'onReset': false
     }, opts)
     this.pause = false
     this.increment = false
@@ -44,7 +45,6 @@ class Life {
     this.size = size
     this.activeMode = false
     this.offgrid = 10
-    this.mono = randomCellColor()
     this.resize()
   }
 
@@ -221,7 +221,10 @@ class Life {
           return randomCellColor()
 
         case 'mono':
-          return that.mono
+          if (!that.runtime.mono) {
+            that.runtime.mono = randomCellColor()
+          }
+          return that.runtime.mono
 
         case 'density':
           return _getColorDensity(x, y)
@@ -262,7 +265,7 @@ class Life {
         if (!grid[x]) {
           grid[x] = []
         }
-        const color = this.activeMode === 'mono' ? this.mono : randomCellColor()
+        const color = this.activeMode === 'mono' ? 'hsl(0, 0%, 100%)' : randomCellColor()
         grid[x][y] = (Math.random() < population) ? color : 0
       }
     }
@@ -343,7 +346,7 @@ class Life {
 
     this.runtime = {}
 
-    this.generation = 0
+    this.generation = 1
 
     if (Math.random() < 0.25) {
       this.runtime.mutationRate = Math.random() * 0.10
@@ -363,13 +366,16 @@ class Life {
       this.runtime.persistColors = this.opts.persistColors
     }
 
-    this.mono = randomCellColor()
     this.generateRandomGrid(this.opts['start_pop'])
+    this.step()
+
+    if (this.opts.onReset) {
+      this.opts.onReset(this)
+    }
     this.drawCanvas()
   }
 
   async run (opts = {}) {
-    console.log(this.opts)
 
     this.reset()
     if (this.opts.print) {

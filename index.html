@@ -31,6 +31,16 @@
     </div>
   </body>
   <script>
+
+    function logGame (currentGame) {
+      console.log(`%cActive mode: ${currentGame.activeMode} `, 'color: #f54730');
+      console.log(`Generation: ${currentGame.generation}`)
+      console.log('Current options:')
+      console.log(currentGame.opts)
+      console.log('Current runtime:')
+      console.log(currentGame.runtime)
+    }
+
     const min_sleep = 10
     const coverage = 0.98
     const canvas = document.getElementById("life");
@@ -41,7 +51,8 @@
       'sleep':100,
       'start_pop': 0.45,
       'min_pop': 0.05,
-      'max_generations': 1000
+      'max_generations': 1000,
+      'onReset': logGame
     })
     game.run()
 
@@ -82,7 +93,6 @@
         case 13: // user has pressed enter
           console.log('Reset')
           game.reset()
-          console.log(`Active mode: ${game.activeMode}`)
           break;
 
         case 32: // user has pressed space
@@ -116,12 +126,7 @@
           break;
 
         case 68: // user has pressed the d key
-          console.log(`Active mode: ${game.activeMode}`)
-          console.log(`Generation: ${game.generation}`)
-          console.log('Current options:')
-          console.log(game.opts)
-          console.log('Current runtime:')
-          console.log(game.runtime)
+          logGame(game)
           break;
 
         default:
