@@ -12,7 +12,7 @@ function randomCellColor () {
 }
 
 function randomInt (min, max) {
-  return Math.floor(Math.random() * Math.floor(max - min)) + min
+  return Math.floor(Math.random() * Math.floor((max + 1) - min)) + min
 }
 
 const hslRegex = /hsl\(\s*(\d{1,3}\.?\d*),\s*(\d{1,2}\.?\d*)%,\s*(\d{1,2}\.?\d*)%\s*\)/
@@ -177,7 +177,7 @@ class Life {
 
     function _getColorDensity (x, y) {
       if (!that.runtime.density_offset) {
-        that.runtime.density_offset = randomInt(15, 120)
+        that.runtime.density_offset = randomInt(50, 120)
       }
       if (!that.runtime.range) {
         that.runtime.range = randomInt(2, 5)
@@ -187,9 +187,9 @@ class Life {
         that.runtime.direction = randomInt(1, 2)
       }
 
-      const maxDensity = (((that.runtime.range * 2) + 1) ** 2) - 1
+      const maxDensity = ((((that.runtime.range * 2) + 1) ** 2) - 1) * 0.6
       const neighbors = _countNeighbors(x, y, that.runtime.range)
-      let density = (neighbors / maxDensity)
+      let density = Math.min((neighbors / maxDensity), 1)
       if (that.runtime.direction === 1) {
         density = 1.0 - density
       }
