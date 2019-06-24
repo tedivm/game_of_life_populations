@@ -31,6 +31,7 @@
     </div>
   </body>
   <script>
+    const min_sleep = 10
     const coverage = 0.98
     const canvas = document.getElementById("life");
     const ctx = canvas.getContext('2d');
@@ -52,11 +53,36 @@
 
     $('body').keyup(function(e){
 
+      function getSleepIncrement(currentSleep) {
+        if (currentSleep <= 250) {
+          return 25
+        }
+
+        if (currentSleep <= 500) {
+          return 50
+        }
+
+        if (currentSleep <= 1000) {
+          return 100
+        }
+
+        if (currentSleep <= 2000) {
+          return 200
+        }
+
+        if (currentSleep <= 4000) {
+          return 500
+        }
+
+        return 1000
+      }
+
       switch (e.keyCode) {
 
         case 13: // user has pressed enter
           console.log('Reset')
           game.reset()
+          console.log(`Active mode: ${game.activeMode}`)
           break;
 
         case 32: // user has pressed space
@@ -66,8 +92,9 @@
 
         case 38: // user has pressed up
           console.log('Increase speed / decrease sleep delay.')
-          if (game.opts.sleep > 100) {
-            game.opts.sleep -= 50
+          if (game.opts.sleep > min_sleep) {
+            game.opts.sleep = Math.max(min_sleep, game.opts.sleep - getSleepIncrement(game.opts.sleep))
+            console.log(`New sleep time: ${game.opts.sleep}`)
           }
           break;
 
@@ -79,7 +106,22 @@
 
         case 40: // user has pressed down
           console.log('Decrease speed / increase sleep delay.')
-            game.opts.sleep += 50
+          let sleep_increment = getSleepIncrement(game.opts.sleep)
+          if (game.opts.sleep < sleep_increment) {
+            game.opts.sleep = sleep_increment
+          } else {
+            game.opts.sleep += sleep_increment
+          }
+          console.log(`New sleep time: ${game.opts.sleep}`)
+          break;
+
+        case 68: // user has pressed the d key
+          console.log(`Active mode: ${game.activeMode}`)
+          console.log(`Generation: ${game.generation}`)
+          console.log('Current options:')
+          console.log(game.opts)
+          console.log('Current runtime:')
+          console.log(game.runtime)
           break;
 
         default:

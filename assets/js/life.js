@@ -25,7 +25,7 @@ function getHSL (str) {
   } : {}
 }
 
-const possibleModes = ['majority', 'blend', 'blend_linear', 'density', 'mono']
+const possibleModes = ['majority', 'blend_wheel', 'blend_spectrum', 'density', 'mono']
 
 class Life {
   constructor (canvas, size, opts) {
@@ -42,8 +42,7 @@ class Life {
     this.increment = false
     this.canvas = canvas
     this.size = size
-    this.mode = false
-    this.persistColors = true
+    this.activeMode = false
     this.offgrid = 10
     this.mono = randomCellColor()
     this.resize()
@@ -130,7 +129,7 @@ class Life {
       return best[Math.floor(Math.random() * best.length)]
     }
 
-    function _getColorBlend (x, y) {
+    function _getColorBlendWheel (x, y) {
       const colors = _getNeighboringColors(x, y)
 
       const colorList = []
@@ -150,7 +149,7 @@ class Life {
       return `hsl(${newColor[0]}, ${newColor[1]}%, ${newColor[2]}%)`
     }
 
-    function _getColorBlendLinear (x, y) {
+    function _getColorBlendSpectrum (x, y) {
       const colors = _getNeighboringColors(x, y)
 
       const colorCode = {
@@ -200,21 +199,21 @@ class Life {
     }
 
     function _getNewColor (x, y) {
-      switch (that.mode) {
+      switch (that.activeMode) {
         case 'majority':
-          if (that.persistColors && _isFilled(x, y)) return grid[x][y]
+          if (that.runtime.persistColors && _isFilled(x, y)) return grid[x][y]
           return _getPredominentColor(x, y)
 
-        case 'blend':
-          if (that.persistColors && _isFilled(x, y)) return grid[x][y]
-          return _getColorBlend(x, y)
+        case 'blend_wheel':
+          if (that.runtime.persistColors && _isFilled(x, y)) return grid[x][y]
+          return _getColorBlendWheel(x, y)
 
-        case 'blend_linear':
-          if (that.persistColors && _isFilled(x, y)) return grid[x][y]
-          return _getColorBlendLinear(x, y)
+        case 'blend_spectrum':
+          if (that.runtime.persistColors && _isFilled(x, y)) return grid[x][y]
+          return _getColorBlendSpectrum(x, y)
 
         case 'random':
-          if (that.persistColors && _isFilled(x, y)) return grid[x][y]
+          if (that.runtime.persistColors && _isFilled(x, y)) return grid[x][y]
           return randomCellColor()
 
         case 'mono':
@@ -224,7 +223,7 @@ class Life {
           return _getColorDensity(x, y)
 
         default:
-          if (that.persistColors && _isFilled(x, y)) return grid[x][y]
+          if (that.runtime.persistColors && _isFilled(x, y)) return grid[x][y]
           return _getPredominentColor(x, y)
       }
     }
@@ -259,7 +258,7 @@ class Life {
         if (!grid[x]) {
           grid[x] = []
         }
-        const color = this.mode === 'mono' ? this.mono : randomCellColor()
+        const color = this.activeMode === 'mono' ? this.mono : randomCellColor()
         grid[x][y] = (Math.random() < population) ? color : 0
       }
     }
@@ -343,15 +342,15 @@ class Life {
     this.generation = 0
 
     if (!this.opts.mode) {
-      this.mode = possibleModes[Math.floor(Math.random() * possibleModes.length)]
+      this.activeMode = possibleModes[Math.floor(Math.random() * possibleModes.length)]
     } else {
-      this.mode = this.opts.mode
+      this.activeMode = this.opts.mode
     }
 
-    if (typeof this.opts.persistColors === 'undefined') {
-      this.persistColors = Math.random() >= 0.5
+    if (this.opts.persistColors === null) {
+      this.runtime.persistColors = Math.random() >= 0.5
     } else {
-      this.persistColors = this.opts.persistColors
+      this.runtime.persistColors = this.opts.persistColors
     }
 
     this.mono = randomCellColor()
