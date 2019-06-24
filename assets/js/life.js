@@ -39,6 +39,7 @@ class Life {
       'mode': false
     }, opts)
     this.pause = false
+    this.increment = false
     this.canvas = canvas
     this.size = size
     this.mode = false
@@ -374,6 +375,11 @@ class Life {
 
       if (this.pause) {
         continue
+      }
+
+      if (this.increment) {
+        this.increment = false
+        this.pause = true
       }
 
       if (this.opts['max_generations'] && this.opts['max_generations'] <= this.generation) {

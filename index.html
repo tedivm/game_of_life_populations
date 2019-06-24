@@ -55,20 +55,30 @@
       switch (e.keyCode) {
 
         case 13: // user has pressed enter
+          console.log('Reset')
           game.reset()
           break;
 
         case 32: // user has pressed space
+          console.log('Toggle Pause')
           game.pause = !game.pause
           break;
 
         case 38: // user has pressed up
+          console.log('Increase speed / decrease sleep delay.')
           if (game.opts.sleep > 100) {
             game.opts.sleep -= 50
           }
           break;
 
+        case 39: // user has pressed right
+          console.log('Go forward a single generation.')
+          game.increment = true
+          game.pause = false
+          break;
+
         case 40: // user has pressed down
+          console.log('Decrease speed / increase sleep delay.')
             game.opts.sleep += 50
           break;
 
