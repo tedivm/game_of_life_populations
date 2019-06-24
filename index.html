@@ -62,7 +62,7 @@
       game.resize()
     });
 
-    $('body').keyup(function(e){
+    $('body').keydown(function(e){
 
       function getSleepIncrement(currentSleep) {
         if (currentSleep <= 250) {
@@ -88,6 +88,7 @@
         return 1000
       }
 
+      let preventDefault = true
       switch (e.keyCode) {
 
         case 13: // user has pressed enter
@@ -130,9 +131,13 @@
           break;
 
         default:
+          preventDefault = false
 
       }
 
+      if (preventDefault) {
+        e.preventDefault()
+      }
     });
 
   </script>
