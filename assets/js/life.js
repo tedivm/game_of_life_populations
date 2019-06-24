@@ -202,18 +202,22 @@ class Life {
       switch (that.activeMode) {
         case 'majority':
           if (that.runtime.persistColors && _isFilled(x, y)) return grid[x][y]
+          if (that.runtime.mutationRate > Math.random()) return randomCellColor()
           return _getPredominentColor(x, y)
 
         case 'blend_wheel':
           if (that.runtime.persistColors && _isFilled(x, y)) return grid[x][y]
+          if (that.runtime.mutationRate > Math.random()) return randomCellColor()
           return _getColorBlendWheel(x, y)
 
         case 'blend_spectrum':
           if (that.runtime.persistColors && _isFilled(x, y)) return grid[x][y]
+          if (that.runtime.mutationRate > Math.random()) return randomCellColor()
           return _getColorBlendSpectrum(x, y)
 
         case 'random':
           if (that.runtime.persistColors && _isFilled(x, y)) return grid[x][y]
+          if (that.runtime.mutationRate > Math.random()) return randomCellColor()
           return randomCellColor()
 
         case 'mono':
@@ -340,6 +344,12 @@ class Life {
     this.runtime = {}
 
     this.generation = 0
+
+    if (Math.random() < 0.25) {
+      this.runtime.mutationRate = Math.random() * 0.10
+    } else {
+      this.runtime.mutationRate = 0
+    }
 
     if (!this.opts.mode) {
       this.activeMode = possibleModes[Math.floor(Math.random() * possibleModes.length)]
