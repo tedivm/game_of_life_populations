@@ -15,7 +15,7 @@ function randomInt (min, max) {
   return Math.floor(Math.random() * Math.floor(max - min)) + min
 }
 
-const hslRegex = /hsl\(\s*(\d{1,3}),\s*(\d{1,2}\.?\d*)%,\s*(\d{1,2}\.?\d*)%\s*\)/
+const hslRegex = /hsl\(\s*(\d{1,3}\.?\d*),\s*(\d{1,2}\.?\d*)%,\s*(\d{1,2}\.?\d*)%\s*\)/
 function getHSL (str) {
   var match = str.match(hslRegex)
   return match ? {
@@ -25,7 +25,7 @@ function getHSL (str) {
   } : {}
 }
 
-const possibleModes = ['majority', 'blend', 'density', 'mono']
+const possibleModes = ['majority', 'blend', 'blend_linear', 'density', 'mono']
 
 class Life {
   constructor (canvas, size, opts) {
@@ -132,6 +132,26 @@ class Life {
     function _getColorBlend (x, y) {
       const colors = _getNeighboringColors(x, y)
 
+      const colorList = []
+
+      for (const color in colors) {
+        const hsl = getHSL(color)
+        for (let x = 0; x < colors[color]; x++) {
+          colorList.push([
+            hsl.hue,
+            hsl.saturation,
+            hsl.lightness
+          ])
+        }
+      }
+
+      const newColor = averageColor(colorList)
+      return `hsl(${newColor[0]}, ${newColor[1]}%, ${newColor[2]}%)`
+    }
+
+    function _getColorBlendLinear (x, y) {
+      const colors = _getNeighboringColors(x, y)
+
       const colorCode = {
         h: 0,
         s: 0,
@@ -187,6 +207,10 @@ class Life {
         case 'blend':
           if (that.persistColors && _isFilled(x, y)) return grid[x][y]
           return _getColorBlend(x, y)
+
+        case 'blend_linear':
+          if (that.persistColors && _isFilled(x, y)) return grid[x][y]
+          return _getColorBlendLinear(x, y)
 
         case 'random':
           if (that.persistColors && _isFilled(x, y)) return grid[x][y]
