@@ -259,14 +259,32 @@ class Life {
   }
 
   generateRandomGrid (population = 0.5) {
+    const that = this
+    function getSpectrumColor (x, y) {
+      let hue = (x / that.columns) * 360
+      let lightness = ((y / that.rows) * 50) + 40
+      return `hsl(${hue}, 100%, ${lightness}%)`
+    }
+
+    const spectrum = Math.random() < 0.2
+
     var grid = []
     for (var x = 0; x < this.columns; x++) {
       for (var y = 0; y < this.rows; y++) {
-        if (!grid[x]) {
-          grid[x] = []
+        if (!grid[x]) grid[x] = []
+        if (Math.random() > population) {
+          grid[x][y] = 0
+          continue
         }
-        const color = this.activeMode === 'mono' ? 'hsl(0, 0%, 100%)' : randomCellColor()
-        grid[x][y] = (Math.random() < population) ? color : 0
+        if (this.activeMode === 'mono' || this.activeMode === 'density') {
+          grid[x][y] = 'hsl(0, 0%, 100%)' // white
+          continue
+        }
+        if (spectrum) {
+          grid[x][y] = getSpectrumColor(x, y)
+          continue
+        }
+        grid[x][y] = randomCellColor()
       }
     }
     this.grid = grid
