@@ -52,6 +52,7 @@
       'start_pop': 0.45,
       'min_pop': 0.05,
       'max_generations': 1500,
+      'backgroundColor': 'Black',
       'onReset': logGame
     })
     game.run()
@@ -124,6 +125,15 @@
             game.opts.sleep += sleep_increment
           }
           console.log(`New sleep time: ${game.opts.sleep}`)
+          break;
+
+        case 66: // user has pressed the d key
+          console.log('Change background color.')
+          if (game.opts.backgroundColor == false) {
+            game.opts.backgroundColor = 'Black'
+          } else {
+            game.opts.backgroundColor = false
+          }
           break;
 
         case 68: // user has pressed the d key

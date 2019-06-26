@@ -38,7 +38,8 @@ class Life {
       'persistColors': null,
       'mode': false,
       'onReset': false,
-      'minSleep': 5
+      'min_sleep': 5,
+      'backgroundColor': false
     }, opts)
     this.pause = false
     this.increment = false
@@ -306,15 +307,17 @@ class Life {
   drawCanvas () {
     const height = this.canvas.offsetHeight
     const width = this.canvas.offsetWidth
-
     const ctx = this.canvas.getContext('2d')
-    ctx.clearRect(0, 0, width, height)
-
     const grid = this.getGrid()
     const offgrid = 2
-
     const screenColumns = this.columns - (offgrid * 2)
     const screenRows = this.rows - (offgrid * 2)
+
+    ctx.clearRect(0, 0, width, height)
+    if (this.opts.backgroundColor) {
+      ctx.fillStyle = this.opts.backgroundColor
+      ctx.fillRect(0, 0, width, height)
+    }
 
     for (var sX = 0; sX < screenColumns; sX++) {
       let gX = sX + offgrid
@@ -406,7 +409,7 @@ class Life {
     let lastRun = (new Date()).getTime()
     for (; true; this.generation++) {
       let now = (new Date()).getTime()
-      let sleepTime = Math.max(this.opts['sleep'] - (now - lastRun), this.opts['minSleep'])
+      let sleepTime = Math.max(this.opts['sleep'] - (now - lastRun), this.opts['min_sleep'])
       await sleep(sleepTime)
       lastRun = (new Date()).getTime()
 
