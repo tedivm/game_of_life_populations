@@ -37,7 +37,8 @@ class Life {
       'max_generations': false,
       'persistColors': null,
       'mode': false,
-      'onReset': false
+      'onReset': false,
+      'minSleep': 5
     }, opts)
     this.pause = false
     this.increment = false
@@ -402,9 +403,12 @@ class Life {
 
     let sameCount = 0
     let lastPop = 0
-
+    let lastRun = (new Date()).getTime()
     for (; true; this.generation++) {
-      await sleep(this.opts['sleep'])
+      let now = (new Date()).getTime()
+      let sleepTime = Math.max(this.opts['sleep'] - (now - lastRun), this.opts['minSleep'])
+      await sleep(sleepTime)
+      lastRun = (new Date()).getTime()
 
       if (this.pause) {
         continue
