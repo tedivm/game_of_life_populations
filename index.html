@@ -47,13 +47,15 @@
     const ctx = canvas.getContext('2d');
     ctx.canvas.width  = window.innerWidth * coverage;
     ctx.canvas.height = window.innerHeight * coverage;
-    const game = new Life(canvas, 5, {
+    const game = new Life(canvas, {
+      'size': 5,
       'sleep':100,
       'start_pop': 0.45,
-      'min_pop': 0.05,
-      'max_generations': 1500,
+      'min_pop': 0.035,
+      'max_generations': 2000,
       'backgroundColor': 'Black',
-      'onReset': logGame
+      'onReset': logGame,
+      'maxSpectrumRepeats': 15
     })
     game.run()
 
@@ -91,6 +93,18 @@
 
       let preventDefault = true
       switch (e.keyCode) {
+
+        case 83:
+          console.log('Shrink')
+          game.opts.size = Math.max(game.opts.size-1, 2)
+          game.reset()
+          break
+
+        case 71:
+          console.log('Grow')
+          game.opts.size++
+          game.reset()
+          break
 
         case 13: // user has pressed enter
           console.log('Reset')

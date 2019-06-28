@@ -11,8 +11,24 @@ function randomCellColor () {
   })
 }
 
-function randomInt (min, max) {
+
+function randomInt (min, max, centeredness = 0) {
+  if (centeredness) {
+    return Math.floor(centeredRandom(centeredness) * Math.floor((max + 1) - min)) + min
+  }
   return Math.floor(Math.random() * Math.floor((max + 1) - min)) + min
+}
+
+function coinFlip (probability = 0.5) {
+  return Math.random() <= probability
+}
+
+function centeredRandom (loops = 4) {
+  let total = 0
+  for (let i = 0; i < loops; i++) {
+    total += Math.random()
+  }
+  return total / loops
 }
 
 const hslRegex = /hsl\(\s*(\d{1,3}\.?\d*),\s*(\d{1,2}\.?\d*)%,\s*(\d{1,2}\.?\d*)%\s*\)/
@@ -28,15 +44,18 @@ function getHSL (str) {
 const possibleModes = ['majority', 'blend_wheel', 'blend_spectrum', 'density', 'mono']
 
 class Life {
-  constructor (canvas, size, opts) {
+  constructor (canvas, opts) {
     this.opts = Object.assign({
+      'size': 5,
       'sleep': 100,
       'print': false,
       'min_pop': 0.05,
       'start_pop': 0.35,
       'max_generations': false,
       'persistColors': null,
+      'maxSpectrumRepeats': 5,
       'mode': false,
+      'spectrum': 0.4,
       'onReset': false,
       'min_sleep': 5,
       'backgroundColor': false
@@ -44,15 +63,14 @@ class Life {
     this.pause = false
     this.increment = false
     this.canvas = canvas
-    this.size = size
     this.activeMode = false
     this.offgrid = 10
     this.resize()
   }
 
   resize () {
-    this.rows = Math.floor(this.canvas.offsetHeight / this.size) + (this.offgrid * 2)
-    this.columns = Math.floor(this.canvas.offsetWidth / this.size) + (this.offgrid * 2)
+    this.rows = Math.floor(this.canvas.offsetHeight / this.opts.size) + (this.offgrid * 2)
+    this.columns = Math.floor(this.canvas.offsetWidth / this.opts.size) + (this.offgrid * 2)
   }
 
   getGrid () {
@@ -72,6 +90,7 @@ class Life {
     var result = []
     var grid = this.getGrid()
     const that = this
+    const color = randomCellColor()
 
     function _isFilled (x, y) {
       return grid[x] && grid[x][y]
@@ -147,6 +166,10 @@ class Life {
         }
       }
 
+      if (colorList.length < 1) {
+        return randomCellColor()
+      }
+
       const newColor = averageColor(colorList)
       return `hsl(${newColor[0]}, ${newColor[1]}%, ${newColor[2]}%)`
     }
@@ -170,6 +193,10 @@ class Life {
         total += colors[color]
       }
 
+      if (total < 1) {
+        return randomCellColor()
+      }
+
       colorCode.h = Math.round(colorCode.h / total)
       colorCode.s = Math.round(colorCode.s / total)
       colorCode.l = Math.round(colorCode.l / total)
@@ -178,27 +205,54 @@ class Life {
     }
 
     function _getColorDensity (x, y) {
-      if (!that.runtime.density_offset) {
-        that.runtime.density_offset = randomInt(50, 120)
-      }
       if (!that.runtime.range) {
         that.runtime.range = randomInt(2, 5)
       }
-
       if (!that.runtime.direction) {
         that.runtime.direction = randomInt(1, 2)
       }
 
-      const maxDensity = ((((that.runtime.range * 2) + 1) ** 2) - 1) * 0.6
+      if (!that.runtime.spectrumSize) {
+        that.runtime.spectrumSize = randomInt(90, 120)
+      }
+
+      if (!that.runtime.density_offset) {
+        const possibleRange = 360 - that.runtime.spectrumSize
+        that.runtime.density_offset = randomInt(0, possibleRange)
+      }
+
+      const maxDensity = ((((that.runtime.range * 2) + 1) ** 2) - 1) * 0.4
       const neighbors = _countNeighbors(x, y, that.runtime.range)
       let density = Math.min((neighbors / maxDensity), 1)
       if (that.runtime.direction === 1) {
         density = 1.0 - density
       }
 
-      const h = (density * 240) + that.runtime.density_offset
+      const h = (density * that.runtime.spectrumSize) + that.runtime.density_offset
       return 'hsl(' + h + ', 100%, 50%)'
     }
+
+    function _getGenerational (x, y) {
+      if (typeof that.runtime.spectrum !== 'boolean') {
+        that.runtime.spectrum = coinFlip(0.7)
+      }
+      if (!that.runtime.spectrum) {
+        return color
+      }
+      if (!that.runtime.spread) {
+        that.runtime.spread = randomInt(100, that.opts['max_generations'], 2)
+      }
+      if (!that.runtime.offset) {
+        that.runtime.offset = Math.floor(Math.random() * that.runtime.spread)
+      }
+      const h = ((that.generation + that.runtime.offset) / that.runtime.spread) * 360
+      return 'hsl(' + h + ', 100%, 50%)'
+    }
+
+    if (!this.generation) {
+      this.generation = 0
+    }
+    this.generation++
 
     function _getNewColor (x, y) {
       switch (that.activeMode) {
@@ -221,6 +275,10 @@ class Life {
           if (that.runtime.persistColors && _isFilled(x, y)) return grid[x][y]
           if (that.runtime.mutationRate > Math.random()) return randomCellColor()
           return randomCellColor()
+
+        case 'generation':
+          if (_isFilled(x, y)) return grid[x][y]
+          return _getGenerational(x, y)
 
         case 'mono':
           if (!that.runtime.mono) {
@@ -249,6 +307,12 @@ class Life {
           alive = count === 3 ? 1 : 0
         }
 
+        if (!alive && that.runtime.spontaneous && that.generation % that.runtime.spontaneousGenerations === 0) {
+          if (Math.random() < that.runtime.spontaneous) {
+            alive = true
+          }
+        }
+
         if (alive) {
           result[x][y] = _getNewColor(x, y)
         } else {
@@ -262,13 +326,50 @@ class Life {
 
   generateRandomGrid (population = 0.5) {
     const that = this
+    const spectrum = Math.random() < this.opts.spectrum
+
+    // Define these here so they stay the same for each newly generated world.
+    const direction = coinFlip()
+    const rotation = coinFlip()
+    const repeats = randomInt(1, this.opts.maxSpectrumRepeats)
+    const xAdjust = randomInt(1, 1000)
+    const yAdjust = randomInt(1, 1000)
     function getSpectrumColor (x, y) {
-      let hue = (x / that.columns) * 360
-      let lightness = ((y / that.rows) * 50) + 40
+      function decimalize (num, factor = 10000) {
+        return Math.floor((num * factor) % factor) / factor
+      }
+
+      const xB = (x + xAdjust) / (that.columns / repeats)
+      const yB = (y + yAdjust) / (that.rows / repeats)
+
+      const xN = decimalize(xB)
+      const yN = decimalize(yB)
+
+      let hueBase
+      let hueDirection
+      let lightnessBase
+      let lightDirection
+
+      if (rotation) {
+        hueBase = xN
+        hueDirection = Math.floor(xB % 2) === 0 ? direction : !direction
+        lightnessBase = yN
+        lightDirection = Math.floor(yB % 2) === 0 ? direction : !direction
+      } else {
+        hueBase = yN
+        hueDirection = Math.floor(yB % 2) === 0 ? direction : !direction
+        lightnessBase = xN
+        lightDirection = Math.floor(xB % 2) === 0 ? direction : !direction
+      }
+
+      const hueModifier = hueDirection ? hueBase : 1 - hueBase
+      const lightnessModifier = lightDirection ? lightnessBase : 1 - lightnessBase
+
+      let hue = (hueModifier * 360) % 360
+      let lightness = ((lightnessModifier * 50) % 50) + 30
+
       return `hsl(${hue}, 100%, ${lightness}%)`
     }
-
-    const spectrum = Math.random() < 0.2
 
     var grid = []
     for (var x = 0; x < this.columns; x++) {
@@ -278,8 +379,12 @@ class Life {
           grid[x][y] = 0
           continue
         }
-        if (this.activeMode === 'mono' || this.activeMode === 'density') {
-          grid[x][y] = 'hsl(0, 0%, 100%)' // white
+        if (this.activeMode === 'mono' || this.activeMode === 'density' || this.activeMode === 'generation') {
+          if (this.opts.backgroundColor) {
+            grid[x][y] = 'hsl(0, 100%, 0%)' // black
+          } else {
+            grid[x][y] = 'hsl(0, 0%, 100%)' // white
+          }
           continue
         }
         if (spectrum) {
@@ -328,7 +433,7 @@ class Life {
         let gY = sY + offgrid
         if (grid[gX][gY]) {
           ctx.fillStyle = grid[gX][gY]
-          ctx.fillRect(sX * this.size, sY * this.size, this.size, this.size)
+          ctx.fillRect(sX * this.opts.size, sY * this.opts.size, this.opts.size, this.opts.size)
         }
       }
     }
@@ -367,13 +472,20 @@ class Life {
     }
 
     this.runtime = {}
+    this.resize()
+    this.generation = 0
 
-    this.generation = 1
-
-    if (Math.random() < 0.25) {
+    if (Math.random() < 1) {
       this.runtime.mutationRate = Math.random() * 0.10
     } else {
       this.runtime.mutationRate = 0
+    }
+
+    if (Math.random() < 0.05) {
+      this.runtime.spontaneous = 0.001 * Math.random()
+      this.runtime.spontaneousGenerations = randomInt(1, 3)
+    } else {
+      this.runtime.spontaneous = false
     }
 
     if (!this.opts.mode) {
@@ -398,7 +510,6 @@ class Life {
   }
 
   async run (opts = {}) {
-
     this.reset()
     if (this.opts.print) {
       this.draw()
@@ -407,7 +518,7 @@ class Life {
     let sameCount = 0
     let lastPop = 0
     let lastRun = (new Date()).getTime()
-    for (; true; this.generation++) {
+    while (true) {
       let now = (new Date()).getTime()
       let sleepTime = Math.max(this.opts['sleep'] - (now - lastRun), this.opts['min_sleep'])
       await sleep(sleepTime)
@@ -422,17 +533,33 @@ class Life {
         this.pause = true
       }
 
+      if (!this.runtime.frames) {
+        this.runtime.frames = [now]
+      } else {
+        this.runtime.frames.unshift(now)
+      }
+
+      if (this.runtime.frames.length > 30) {
+        let oldest = this.runtime.frames.pop()
+        let framerate = Math.floor((this.runtime.frames.length + 1) / ((now - oldest) / 1000))
+        if (this.opts.fpsDisplay && this.generation % this.opts.fpsDisplay === 0) {
+          console.log(`${framerate}/s`)
+        }
+      }
+
       if (this.opts['max_generations'] && this.opts['max_generations'] <= this.generation) {
+        console.log(`Resetting at generation ${this.generation}.`)
         this.reset()
         continue
       }
 
       this.step()
-      const curPop = this.count()
-      const maxPop = this.rows * this.columns
 
       // If population is too low reset the world.
+      const curPop = this.count()
+      const maxPop = this.rows * this.columns
       if (this.opts['min_pop'] > (curPop / maxPop)) {
+        console.log(`Low population at generation ${this.generation}.`)
         this.reset()
         continue
       }

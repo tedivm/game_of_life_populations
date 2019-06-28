@@ -10,37 +10,40 @@ Life should be colorful, and that's what this version of [Conway's Game of Life]
 * Pause/Unpause - Spacebar
 * Increment Generation - Right Arrow Key
 * Debug Info (to console) - D Key
+* Shrink/Grow cell size- S and G Keys
 
 
 ## Modes
 
 All modes follow the original rules of Conway's Game of Life to define whether a cell lives, dies, or is created.
 
-For all modes other than the original there are three different additions.
+Ther are also a variety of rules on how colors are assigned.
 
 * **Color Logic** is unique to each mode and defines how cells are assigned colors.
 * **Persistence** defines whether existing cells keep their color or have them recalculated.
 * **Mutation** adds an additional step to the color logic that gives a small number of cells a random color.
+* **Spectrum** initializes the grid with a gradient of color rather than randomly.
+
+| Modes          | Color Logic | Persistence\* | Mutation\* | Spectrum\* |
+|----------------|-------------|---------------|------------|------------|
+| Monochrome     |             |               |            |            |
+| Majority       | ✓           | ✓             | ✓          | ✓          |
+| Blend Wheel    | ✓           | ✓             | ✓          | ✓          |
+| Blend Spectrum | ✓           | ✓             | ✓          | ✓          |
+| Density        | ✓           |               |            |            |
+| Generation     | ✓           | ✓             |            | ✓          |
+| Random         | ✓           | ✓             |            |            |
 
 
-| Modes          | Color Logic | Persistence | Mutation |
-|----------------|-------------|-------------|----------|
-| Monochrome     |             |             |          |
-| Majority       | ✓           | ✓           | ✓        |
-| Blend Wheel    | ✓           | ✓           | ✓        |
-| Blend Spectrum | ✓           | ✓           | ✓        |
-| Density        | ✓           |             |          |
-| Random         | ✓           | ✓           |          |
-
-Both **Persistence** and **Mutation** are optional features that get toggled randomly when new worlds are generated.
+\* These modes are optional and will be randomly toggled on at the start of each run.
 
 
-### Monochrome/Original
+### Original
 
 This is the original version of Conway's Game of Life. The color of the cells are all the same, and that value is selected randomly when a new world is generated.
 
 
-### Majority (aka "Immigration Game")
+### Majority
 
 When cells are given colors they take on the color of the majority of their neighbors. If there is a tie then a random color is selected from the tied values.
 
@@ -58,6 +61,11 @@ When cells are given colors they take on average color of their neighbors. This 
 ### Density
 
 Cell colors are based on the population density surrounding the cell.
+
+
+### Generation
+
+Each generation is assigned a specific color. Most of the time this uses a color spectrum, so that each generation is subtlety different than the previous one. Other runs it assigns each generation a random color.
 
 
 ### Random
