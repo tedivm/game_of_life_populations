@@ -721,7 +721,7 @@ class Life {
 
     const modifiers = []
 
-    if (['monochrome', 'density'].includes(this.activeMode)) {
+    if (!['monochrome', 'density'].includes(this.activeMode)) {
       if (this.runtime.mutationRate > 0) {
         modifiers.push('mutations')
       }
