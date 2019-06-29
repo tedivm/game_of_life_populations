@@ -55,7 +55,18 @@
       'max_generations': 2000,
       'backgroundColor': 'Black',
       'onReset': logGame,
-      'maxSpectrumRepeats': 15
+      'maxSpectrumRepeats': 15,
+      'helpText':
+`Reset: Enter
+Pause: Space
+Faster: Up
+Slower: Down
+Increment: Right
+Shrink: s
+Grow: g
+Background: b
+FPS: f
+Help: h`
     })
     game.run()
 
@@ -90,17 +101,26 @@
 
         return 1000
       }
-
       let preventDefault = true
       switch (e.keyCode) {
 
-        case 83:
+        case 72:
+          console.log('Toggle Help')
+          game.opts.helpDisplay = !game.opts.helpDisplay
+          break
+
+        case 83: // s
           console.log('Shrink')
           game.opts.size = Math.max(game.opts.size-1, 2)
           game.reset()
           break
 
-        case 71:
+        case 70: // f
+          console.log('Toggle FPS')
+          game.opts.fps = !game.opts.fps
+          break
+
+        case 71: // g
           console.log('Grow')
           game.opts.size++
           game.reset()

@@ -31,6 +31,41 @@ function centeredRandom (loops = 4) {
   return total / loops
 }
 
+function drawTextBG (ctx, x, y, txt, opts = {}) {
+  opts = Object.assign({
+    'font': '15px Courier',
+    'backgroundColor': 'black',
+    'fontColor': 'white',
+    'textBaseline': 'top',
+    'textAlign': 'center'
+  }, opts)
+  ctx.save()
+  ctx.font = opts.font
+  const margin = 5
+  const fontSize = parseInt(opts.font, 10) * 1.1
+  const width = ctx.measureText(txt).width + (2 * margin)
+  const height = fontSize
+  let rectX
+  let rectY
+  switch (opts.textAlign) {
+    case 'center':
+      rectX = x - (width / 2)
+      rectY = y - (height * 0.05)
+      break
+    default:
+      rectX = x
+      rectY = y - (height * 0.05)
+  }
+
+  ctx.textBaseline = opts.textBaseline
+  ctx.textAlign = opts.textAlign
+  ctx.fillStyle = opts.backgroundColor
+  ctx.fillRect(rectX, rectY, width, height * 1.1)
+  ctx.fillStyle = opts.fontColor
+  ctx.fillText(txt, x, y)
+  ctx.restore()
+}
+
 const hslRegex = /hsl\(\s*(\d{1,3}\.?\d*),\s*(\d{1,2}\.?\d*)%,\s*(\d{1,2}\.?\d*)%\s*\)/
 function getHSL (str) {
   var match = str.match(hslRegex)
@@ -41,7 +76,13 @@ function getHSL (str) {
   } : {}
 }
 
-const possibleModes = ['majority', 'blend_wheel', 'blend_spectrum', 'density', 'mono']
+const possibleModes = [
+  'majority',
+  'blend_wheel',
+  'blend_spectrum',
+  'density',
+  'monochrome',
+  'generational']
 
 class Life {
   constructor (canvas, opts) {
@@ -58,7 +99,8 @@ class Life {
       'spectrum': 0.4,
       'onReset': false,
       'min_sleep': 5,
-      'backgroundColor': false
+      'backgroundColor': false,
+      'fps': false
     }, opts)
     this.pause = false
     this.increment = false
@@ -276,15 +318,15 @@ class Life {
           if (that.runtime.mutationRate > Math.random()) return randomCellColor()
           return randomCellColor()
 
-        case 'generation':
+        case 'generational':
           if (_isFilled(x, y)) return grid[x][y]
           return _getGenerational(x, y)
 
-        case 'mono':
-          if (!that.runtime.mono) {
-            that.runtime.mono = randomCellColor()
+        case 'monochrome':
+          if (!that.runtime.monochrome) {
+            that.runtime.monochrome = randomCellColor()
           }
-          return that.runtime.mono
+          return that.runtime.monochrome
 
         case 'density':
           return _getColorDensity(x, y)
@@ -379,7 +421,7 @@ class Life {
           grid[x][y] = 0
           continue
         }
-        if (this.activeMode === 'mono' || this.activeMode === 'density' || this.activeMode === 'generation') {
+        if (this.activeMode === 'monochrome' || this.activeMode === 'density' || this.activeMode === 'generation') {
           if (this.opts.backgroundColor) {
             grid[x][y] = 'hsl(0, 100%, 0%)' // black
           } else {
@@ -417,7 +459,7 @@ class Life {
     const offgrid = 2
     const screenColumns = this.columns - (offgrid * 2)
     const screenRows = this.rows - (offgrid * 2)
-
+    ctx.save()
     ctx.clearRect(0, 0, width, height)
     if (this.opts.backgroundColor) {
       ctx.fillStyle = this.opts.backgroundColor
@@ -437,6 +479,7 @@ class Life {
         }
       }
     }
+    ctx.restore()
   }
 
   count () {
@@ -471,11 +514,13 @@ class Life {
       this.opts = Object.assign(this.opts, opts)
     }
 
-    this.runtime = {}
+    this.runtime = {
+      'startTime': (new Date()).getTime()
+    }
     this.resize()
     this.generation = 0
 
-    if (Math.random() < 1) {
+    if (Math.random() < 0.1) {
       this.runtime.mutationRate = Math.random() * 0.10
     } else {
       this.runtime.mutationRate = 0
@@ -539,9 +584,10 @@ class Life {
         this.runtime.frames.unshift(now)
       }
 
+      let framerate = false
       if (this.runtime.frames.length > 30) {
         let oldest = this.runtime.frames.pop()
-        let framerate = Math.floor((this.runtime.frames.length + 1) / ((now - oldest) / 1000))
+        framerate = Math.floor((this.runtime.frames.length + 1) / ((now - oldest) / 1000))
         if (this.opts.fpsDisplay && this.generation % this.opts.fpsDisplay === 0) {
           console.log(`${framerate}/s`)
         }
@@ -579,8 +625,134 @@ class Life {
       if (this.opts.print) {
         this.draw()
       }
-
+      const sinceStart = (new Date()).getTime() - this.runtime.startTime
       this.drawCanvas()
+      this.drawTitle()
+      if (this.opts.helpDisplay || sinceStart < 5000) {
+        this.drawHelp()
+      }
+      if (this.opts.fps) {
+        this.drawFPS(framerate)
+      }
     }
+  }
+
+  drawFPS (fps) {
+    const ctx = this.canvas.getContext('2d')
+    const fontSize = 25
+    if (fps) {
+      drawTextBG(
+        ctx,
+        10,
+        this.canvas.height - (fontSize * 2),
+        `${fps}/s`,
+        {
+          font: `${fontSize}px Courier New`,
+          fontColor: 'white',
+          backgroundColor: 'black',
+          textAlign: 'start'
+        })
+    }
+    drawTextBG(
+      ctx,
+      10,
+      this.canvas.height - fontSize,
+      `${this.generation}`,
+      {
+        font: `${fontSize}px Courier New`,
+        fontColor: 'white',
+        backgroundColor: 'black',
+        textAlign: 'start'
+      })
+  }
+
+  drawHelp () {
+    if (!this.opts.helpText) {
+      return
+    }
+
+    const ctx = this.canvas.getContext('2d')
+    ctx.save()
+    const textChunks = this.opts.helpText.split('\n')
+    const fontSize = 20
+    const margin = 10
+    let offset = 0
+
+    const font = `${fontSize}px Courier New`
+    ctx.font = font
+    const longest = textChunks.reduce((a, b) => ctx.measureText(a).width > ctx.measureText(b).width ? a : b)
+    const textWidth = ctx.measureText(longest).width * 1.2
+    const textHeight = fontSize + ((textChunks.length - 1) * (fontSize + margin)) + 10
+    const startX = (this.canvas.width / 2) - (textWidth / 2)
+    const startY = (this.canvas.height / 2) - (textHeight / 2)
+
+    ctx.fillStyle = 'black'
+    ctx.fillRect(startX - (margin / 2), startY - (margin / 2), textWidth, textHeight)
+
+    for (let chunk of textChunks) {
+      drawTextBG(
+        ctx,
+        startX,
+        startY + offset,
+        chunk,
+        {
+          font: font,
+          fontColor: 'white',
+          backgroundColor: 'black',
+          textAlign: 'start'
+        })
+      offset += fontSize + margin
+    }
+
+    ctx.restore()
+  }
+
+  drawTitle () {
+    const sinceStart = (new Date()).getTime() - this.runtime.startTime
+    const fadeStart = 2000
+    const fadeTime = 3000
+    if (sinceStart > (fadeStart + fadeTime)) {
+      return
+    }
+    const mode = this.activeMode.replace('_', ' ').replace(/\w\S*/g, txt => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase())
+    const ctx = this.canvas.getContext('2d')
+    ctx.save()
+
+    const modifiers = []
+
+    if (['monochrome', 'density'].includes(this.activeMode)) {
+      if (this.runtime.mutationRate > 0) {
+        modifiers.push('mutations')
+      }
+    }
+
+    if (this.activeMode === 'generational') {
+      modifiers.push(this.runtime.spectrum ? 'spectrum' : 'random')
+    }
+
+    if (this.runtime.spontaneousGenerations > 0) {
+      modifiers.push('spontaneous generation')
+    }
+
+    let title = mode
+    if (modifiers.length) {
+      title = `${title} (${modifiers.join(',')})`
+    }
+
+    if (sinceStart > fadeStart) {
+      ctx.globalAlpha = 1 - ((sinceStart - fadeStart) / fadeTime)
+    }
+    const fontSize = 25
+    drawTextBG(
+      ctx,
+      this.canvas.width / 2,
+      this.canvas.height - fontSize,
+      title,
+      {
+        font: `${fontSize}px Courier New`,
+        fontColor: 'white',
+        backgroundColor: 'black'
+      })
+    ctx.restore()
   }
 }
