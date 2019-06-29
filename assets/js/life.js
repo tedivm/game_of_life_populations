@@ -737,7 +737,7 @@ class Life {
 
     let title = mode
     if (modifiers.length) {
-      title = `${title} (${modifiers.join(',')})`
+      title = `${title} (${modifiers.join(', ')})`
     }
 
     if (sinceStart > fadeStart) {
