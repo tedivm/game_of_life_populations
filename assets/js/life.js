@@ -645,8 +645,15 @@ class Life {
       const sinceStart = (new Date()).getTime() - firstRun
       this.drawCanvas()
       this.drawTitle()
-      if (this.opts.helpDisplay || sinceStart < 5000) {
-        this.drawHelp()
+
+      const helpTime = 1500
+      const helpFade = 3500
+      if (this.opts.helpDisplay || sinceStart < (helpTime + helpFade)) {
+        let alpha = 1
+        if (sinceStart > helpTime) {
+          alpha = 1 - ((sinceStart - helpTime) / helpFade)
+        }
+        this.drawHelp(alpha)
       }
       if (this.opts.fps) {
         this.drawFPS(framerate)
@@ -683,13 +690,18 @@ class Life {
       })
   }
 
-  drawHelp () {
+  drawHelp (alpha) {
     if (!this.opts.helpText) {
       return
     }
 
     const ctx = this.canvas.getContext('2d')
     ctx.save()
+
+    if (alpha < 1) {
+      ctx.globalAlpha = alpha
+    }
+
     const textChunks = this.opts.helpText.split('\n')
     const fontSize = 20
     const margin = 10
