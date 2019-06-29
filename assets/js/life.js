@@ -100,7 +100,8 @@ class Life {
       'onReset': false,
       'min_sleep': 5,
       'backgroundColor': false,
-      'fps': false
+      'fps': false,
+      'font': 'Courier New'
     }, opts)
     this.pause = false
     this.increment = false
@@ -373,6 +374,7 @@ class Life {
     // Define these here so they stay the same for each newly generated world.
     const direction = coinFlip()
     const rotation = coinFlip()
+    const blocky = coinFlip()
     const repeats = randomInt(1, this.opts.maxSpectrumRepeats)
     const xAdjust = randomInt(1, 1000)
     const yAdjust = randomInt(1, 1000)
@@ -394,14 +396,24 @@ class Life {
 
       if (rotation) {
         hueBase = xN
-        hueDirection = Math.floor(xB % 2) === 0 ? direction : !direction
         lightnessBase = yN
-        lightDirection = Math.floor(yB % 2) === 0 ? direction : !direction
+        if (blocky) {
+          hueDirection = direction
+          lightDirection = direction
+        } else {
+          hueDirection = Math.floor(xB % 2) === 0 ? direction : !direction
+          lightDirection = Math.floor(yB % 2) === 0 ? direction : !direction
+        }
       } else {
         hueBase = yN
-        hueDirection = Math.floor(yB % 2) === 0 ? direction : !direction
         lightnessBase = xN
-        lightDirection = Math.floor(xB % 2) === 0 ? direction : !direction
+        if (blocky) {
+          hueDirection = direction
+          lightDirection = direction
+        } else {
+          hueDirection = Math.floor(yB % 2) === 0 ? direction : !direction
+          lightDirection = Math.floor(xB % 2) === 0 ? direction : !direction
+        }
       }
 
       const hueModifier = hueDirection ? hueBase : 1 - hueBase
@@ -421,7 +433,7 @@ class Life {
           grid[x][y] = 0
           continue
         }
-        if (this.activeMode === 'monochrome' || this.activeMode === 'density' || this.activeMode === 'generation') {
+        if (this.activeMode === 'monochrome' || this.activeMode === 'density' || this.activeMode === 'generational') {
           if (this.opts.backgroundColor) {
             grid[x][y] = 'hsl(0, 100%, 0%)' // black
           } else {
@@ -571,6 +583,7 @@ class Life {
       lastRun = (new Date()).getTime()
 
       if (this.pause) {
+        this.runtime.frames = false
         continue
       }
 
@@ -587,7 +600,10 @@ class Life {
 
       let framerate = false
       if (this.runtime.frames.length > 30) {
-        let oldest = this.runtime.frames.pop()
+        this.runtime.frames.pop()
+      }
+      if (this.runtime.frames.length > 5) {
+        let oldest = this.runtime.frames[this.runtime.frames.length - 1]
         framerate = Math.floor((this.runtime.frames.length + 1) / ((now - oldest) / 1000))
         if (this.opts.fpsDisplay && this.generation % this.opts.fpsDisplay === 0) {
           console.log(`${framerate}/s`)
@@ -640,7 +656,7 @@ class Life {
 
   drawFPS (fps) {
     const ctx = this.canvas.getContext('2d')
-    const fontSize = 25
+    const fontSize = 20
     if (fps) {
       drawTextBG(
         ctx,
@@ -648,9 +664,9 @@ class Life {
         this.canvas.height - (fontSize * 2),
         `${fps}/s`,
         {
-          font: `${fontSize}px Courier New`,
-          fontColor: 'white',
-          backgroundColor: 'black',
+          font: `${fontSize}px ${this.opts.font}`,
+          fontColor: this.opts.backgroundColor === 'black' ? 'white' : 'black',
+          backgroundColor: this.opts.backgroundColor === 'black' ? 'black' : 'white',
           textAlign: 'start'
         })
     }
@@ -660,9 +676,9 @@ class Life {
       this.canvas.height - fontSize,
       `${this.generation}`,
       {
-        font: `${fontSize}px Courier New`,
-        fontColor: 'white',
-        backgroundColor: 'black',
+        font: `${fontSize}px ${this.opts.font}`,
+        fontColor: this.opts.backgroundColor === 'black' ? 'white' : 'black',
+        backgroundColor: this.opts.backgroundColor === 'black' ? 'black' : 'white',
         textAlign: 'start'
       })
   }
@@ -679,7 +695,7 @@ class Life {
     const margin = 10
     let offset = 0
 
-    const font = `${fontSize}px Courier New`
+    const font = `${fontSize}px ${this.opts.font}`
     ctx.font = font
     const longest = textChunks.reduce((a, b) => ctx.measureText(a).width > ctx.measureText(b).width ? a : b)
     const textWidth = ctx.measureText(longest).width * 1.2
@@ -687,7 +703,7 @@ class Life {
     const startX = (this.canvas.width / 2) - (textWidth / 2)
     const startY = (this.canvas.height / 2) - (textHeight / 2)
 
-    ctx.fillStyle = 'black'
+    ctx.fillStyle = this.opts.backgroundColor === 'black' ? 'black' : 'white'
     ctx.fillRect(startX - (margin / 2), startY - (margin / 2), textWidth, textHeight)
 
     for (let chunk of textChunks) {
@@ -698,8 +714,8 @@ class Life {
         chunk,
         {
           font: font,
-          fontColor: 'white',
-          backgroundColor: 'black',
+          fontColor: this.opts.backgroundColor === 'black' ? 'white' : 'black',
+          backgroundColor: this.opts.backgroundColor === 'black' ? 'black' : 'white',
           textAlign: 'start'
         })
       offset += fontSize + margin
@@ -750,9 +766,9 @@ class Life {
       this.canvas.height - fontSize,
       title,
       {
-        font: `${fontSize}px Courier New`,
-        fontColor: 'white',
-        backgroundColor: 'black'
+        font: `${fontSize}px ${this.opts.font}`,
+        fontColor: this.opts.backgroundColor === 'black' ? 'white' : 'black',
+        backgroundColor: this.opts.backgroundColor === 'black' ? 'black' : 'white'
       })
     ctx.restore()
   }
