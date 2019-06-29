@@ -104,6 +104,11 @@ Help: h`
       let preventDefault = true
       switch (e.keyCode) {
 
+        case 67:
+          console.log('Change Color (mono)')
+          game.runtime.monochrome = randomCellColor()
+          break
+
         case 72:
           console.log('Toggle Help')
           game.opts.helpDisplay = !game.opts.helpDisplay
