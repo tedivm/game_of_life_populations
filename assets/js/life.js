@@ -562,6 +562,7 @@ class Life {
 
     let sameCount = 0
     let lastPop = 0
+    const firstRun = (new Date()).getTime()
     let lastRun = (new Date()).getTime()
     while (true) {
       let now = (new Date()).getTime()
@@ -625,7 +626,7 @@ class Life {
       if (this.opts.print) {
         this.draw()
       }
-      const sinceStart = (new Date()).getTime() - this.runtime.startTime
+      const sinceStart = (new Date()).getTime() - firstRun
       this.drawCanvas()
       this.drawTitle()
       if (this.opts.helpDisplay || sinceStart < 5000) {
