@@ -650,7 +650,7 @@ class Life {
       const helpFade = 3500
       if (this.opts.helpDisplay || sinceStart < (helpTime + helpFade)) {
         let alpha = 1
-        if (sinceStart > helpTime) {
+        if (!this.opts.helpDisplay && sinceStart > helpTime) {
           alpha = 1 - ((sinceStart - helpTime) / helpFade)
         }
         this.drawHelp(alpha)
