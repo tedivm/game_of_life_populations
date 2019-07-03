@@ -66,6 +66,7 @@ Increment: Right
 Shrink: s
 Grow: g
 Background: b
+Colors: c
 FPS: f`
     })
     game.run()
@@ -105,8 +106,8 @@ FPS: f`
       switch (e.keyCode) {
 
         case 67:
-          console.log('Change Color (mono)')
-          game.runtime.monochrome = randomCellColor()
+          console.log('Change Colors')
+          game.resetColors()
           break
 
         case 72:

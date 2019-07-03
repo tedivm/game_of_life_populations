@@ -248,30 +248,30 @@ class Life {
     }
 
     function _getColorDensity (x, y) {
-      if (!that.runtime.range) {
-        that.runtime.range = randomInt(2, 5)
+      if (!that.colors.range) {
+        that.colors.range = randomInt(2, 5)
       }
-      if (!that.runtime.direction) {
-        that.runtime.direction = randomInt(1, 2)
-      }
-
-      if (!that.runtime.spectrumSize) {
-        that.runtime.spectrumSize = randomInt(90, 120)
+      if (!that.colors.direction) {
+        that.colors.direction = randomInt(1, 2)
       }
 
-      if (!that.runtime.density_offset) {
-        const possibleRange = 360 - that.runtime.spectrumSize
-        that.runtime.density_offset = randomInt(0, possibleRange)
+      if (!that.colors.spectrumSize) {
+        that.colors.spectrumSize = randomInt(90, 120)
       }
 
-      const maxDensity = ((((that.runtime.range * 2) + 1) ** 2) - 1) * 0.4
-      const neighbors = _countNeighbors(x, y, that.runtime.range)
+      if (!that.colors.density_offset) {
+        const possibleRange = 360 - that.colors.spectrumSize
+        that.colors.density_offset = randomInt(0, possibleRange)
+      }
+
+      const maxDensity = ((((that.colors.range * 2) + 1) ** 2) - 1) * 0.4
+      const neighbors = _countNeighbors(x, y, that.colors.range)
       let density = Math.min((neighbors / maxDensity), 1)
-      if (that.runtime.direction === 1) {
+      if (that.colors.direction === 1) {
         density = 1.0 - density
       }
 
-      const h = (density * that.runtime.spectrumSize) + that.runtime.density_offset
+      const h = (density * that.colors.spectrumSize) + that.colors.density_offset
       return 'hsl(' + h + ', 100%, 50%)'
     }
 
@@ -282,13 +282,13 @@ class Life {
       if (!that.runtime.spectrum) {
         return color
       }
-      if (!that.runtime.spread) {
-        that.runtime.spread = randomInt(100, that.opts['max_generations'], 2)
+      if (!that.colors.spread) {
+        that.colors.spread = randomInt(100, that.opts['max_generations'], 2)
       }
-      if (!that.runtime.offset) {
-        that.runtime.offset = Math.floor(Math.random() * that.runtime.spread)
+      if (!that.colors.offset) {
+        that.colors.offset = Math.floor(Math.random() * that.colors.spread)
       }
-      const h = ((that.generation + that.runtime.offset) / that.runtime.spread) * 360
+      const h = ((that.generation + that.colors.offset) / that.colors.spread) * 360
       return 'hsl(' + h + ', 100%, 50%)'
     }
 
@@ -300,22 +300,22 @@ class Life {
     function _getNewColor (x, y) {
       switch (that.activeMode) {
         case 'majority':
-          if (that.runtime.persistColors && _isFilled(x, y)) return grid[x][y]
+          if (that.colors.persistColors && _isFilled(x, y)) return grid[x][y]
           if (that.runtime.mutationRate > Math.random()) return randomCellColor()
           return _getPredominentColor(x, y)
 
         case 'blend_wheel':
-          if (that.runtime.persistColors && _isFilled(x, y)) return grid[x][y]
+          if (that.colors.persistColors && _isFilled(x, y)) return grid[x][y]
           if (that.runtime.mutationRate > Math.random()) return randomCellColor()
           return _getColorBlendWheel(x, y)
 
         case 'blend_spectrum':
-          if (that.runtime.persistColors && _isFilled(x, y)) return grid[x][y]
+          if (that.colors.persistColors && _isFilled(x, y)) return grid[x][y]
           if (that.runtime.mutationRate > Math.random()) return randomCellColor()
           return _getColorBlendSpectrum(x, y)
 
         case 'random':
-          if (that.runtime.persistColors && _isFilled(x, y)) return grid[x][y]
+          if (that.colors.persistColors && _isFilled(x, y)) return grid[x][y]
           if (that.runtime.mutationRate > Math.random()) return randomCellColor()
           return randomCellColor()
 
@@ -324,10 +324,10 @@ class Life {
           return _getGenerational(x, y)
 
         case 'monochrome':
-          if (!that.runtime.monochrome) {
-            that.runtime.monochrome = randomCellColor()
+          if (!that.colors.monochrome) {
+            that.colors.monochrome = randomCellColor()
           }
-          return that.runtime.monochrome
+          return that.colors.monochrome
 
         case 'density':
           return _getColorDensity(x, y)
@@ -526,10 +526,13 @@ class Life {
       this.opts = Object.assign(this.opts, opts)
     }
 
+    this.colors = {}
+
     this.runtime = {
       'startTime': (new Date()).getTime()
     }
     this.resize()
+    this.resetColors()
     this.generation = 0
 
     if (Math.random() < 0.1) {
@@ -551,12 +554,6 @@ class Life {
       this.activeMode = this.opts.mode
     }
 
-    if (this.opts.persistColors === null) {
-      this.runtime.persistColors = Math.random() >= 0.5
-    } else {
-      this.runtime.persistColors = this.opts.persistColors
-    }
-
     this.generateRandomGrid(this.opts['start_pop'])
     this.step()
 
@@ -564,6 +561,15 @@ class Life {
       this.opts.onReset(this)
     }
     this.drawCanvas()
+  }
+
+  resetColors () {
+    this.colors = {}
+    if (this.opts.persistColors === null) {
+      this.colors.persistColors = Math.random() >= 0.5
+    } else {
+      this.colors.persistColors = this.opts.persistColors
+    }
   }
 
   async run (opts = {}) {
