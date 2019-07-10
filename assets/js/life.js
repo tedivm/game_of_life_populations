@@ -590,6 +590,16 @@ class Life {
 
       if (this.pause) {
         this.runtime.frames = false
+        this.drawCanvas()
+        this.drawTitle()
+        if (this.opts.fps) {
+          this.drawFPS(false)
+        }
+        if (this.opts.helpDisplay) {
+          let alpha = 1
+          this.drawHelp(alpha)
+        }
+        await sleep(this.opts['min_sleep'])
         continue
       }
 
