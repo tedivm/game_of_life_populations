@@ -107,6 +107,7 @@ class Life {
     this.increment = false
     this.canvas = canvas
     this.activeMode = false
+    this.startMode = 'majority'
     this.offgrid = 10
     this.resize()
   }
@@ -549,7 +550,11 @@ class Life {
     }
 
     if (!this.opts.mode) {
-      this.activeMode = possibleModes[Math.floor(Math.random() * possibleModes.length)]
+      if (!this.activeMode && this.startMode) {
+        this.activeMode = this.startMode
+      } else {
+        this.activeMode = possibleModes[Math.floor(Math.random() * possibleModes.length)]
+      }
     } else {
       this.activeMode = this.opts.mode
     }
