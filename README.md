@@ -2,6 +2,7 @@
 
 Life should be colorful, and that's what this version of [Conway's Game of Life](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life) brings.
 
+See it [in action](https://life.tedivm.com/)!
 
 ## Controls
 
